@@ -9,29 +9,31 @@ namespace Hnefatafl.Console.Tools
     {
         public static class Settings
         {
-            public static int ColumnWidth { get; set; } = 4;
-            public static int RowHeight { get; set; } = 2;
-            public static ConsoleColor HeadersColor { get; set; } = ConsoleColor.White;
-            public static ConsoleColor GridColor { get; set; } = ConsoleColor.DarkGray;
-            public static ConsoleColor KingColor { get; set; } = ConsoleColor.Yellow;
-            public static ConsoleColor DefenderColor { get; set; } = ConsoleColor.Green;
-            public static ConsoleColor AttackerColor { get; set; } = ConsoleColor.Red;
-            public static ConsoleColor SpecialFieldColor { get; set; } = ConsoleColor.DarkMagenta;
-            public static ConsoleColor DefaultBackground { get; set; } = ConsoleColor.Black;
-            public static ConsoleColor SelectionPawnBackground { get; set; } = ConsoleColor.Cyan;
-            public static ConsoleColor SelectedPawnBackground { get; set; } = ConsoleColor.DarkCyan;
-            public static ConsoleColor SelectionFieldBackground { get; set; } = ConsoleColor.Cyan;
+            public static int ColumnWidth { get; } = 4;
+            public static int RowHeight { get; } = 2;
+            public static ConsoleColor HeadersColor { get; } = ConsoleColor.White;
+            public static ConsoleColor GridColor { get; } = ConsoleColor.DarkGray;
+            public static ConsoleColor KingColor { get; } = ConsoleColor.Yellow;
+            public static ConsoleColor DefenderColor { get; } = ConsoleColor.Green;
+            public static ConsoleColor AttackerColor { get; } = ConsoleColor.Red;
+            public static ConsoleColor SpecialFieldColor { get; } = ConsoleColor.DarkMagenta;
+            public static ConsoleColor DefaultBackground { get; } = ConsoleColor.Black;
+            public static ConsoleColor AvailablePawnBackground { get; } = ConsoleColor.DarkCyan;
+            public static ConsoleColor SelectionPawnBackground { get; } = ConsoleColor.Cyan;
+            public static ConsoleColor SelectedPawnBackground { get; } = ConsoleColor.DarkCyan;
+            public static ConsoleColor AvailableFieldBackground { get; } = ConsoleColor.DarkCyan;
+            public static ConsoleColor SelectionFieldBackground { get; } = ConsoleColor.Cyan;
         }
 
-        private const string EMPTY_FIELD = "   ";
-        private const string SEPARATOR = "---";
+        private static readonly string EMPTY_FIELD = string.Empty.PadLeft(Settings.ColumnWidth - 1, ' ');
+        private static readonly string SEPARATOR = string.Empty.PadLeft(Settings.ColumnWidth - 1, '-');
 
         private readonly static IEnumerable<char> HEADERS = Enumerable.Range(0, Board.SIZE).Select(i => ((char)('A' + i)));
 
         public static void PrintBoard()
         {
             int width = (Board.SIZE + 1) * Settings.ColumnWidth;
-            int height = ConsoleWriter.Settings.COMMUNICATION_ROW + 4;
+            int height = ConsoleWriter.Settings.CommunicationRow + 4;
 
             SetWindowSize(width, height);
             if (OperatingSystem.IsWindows())
@@ -70,33 +72,22 @@ namespace Hnefatafl.Console.Tools
 
         public static void PrintPawns(Board board)
         {
-            foreach (Pawn pawn in board.GetPawns(Player.All))
-                PrintField(pawn.Field);
-            SetCursorPosition(0, (board.Rows + 1) * Settings.RowHeight);
+            foreach (Pawn pawn in board.GetPawns(Player.All, false))
+                PrintField(pawn.Field, Settings.DefaultBackground);
         }
 
-        public static void PrintField(Field field)
+        public static void PrintPawnAvailability(Pawn pawn) => PrintField(pawn.Field, Settings.AvailablePawnBackground);
+        public static void PrintPawnSelection(Pawn pawn) => PrintField(pawn.Field, Settings.SelectionPawnBackground);
+        public static void PrintSelectedPawn(Pawn pawn) => PrintField(pawn.Field, Settings.SelectedPawnBackground);
+
+        public static void PrintFieldAvailability(Field field) => PrintField(field, Settings.AvailableFieldBackground);
+        public static void PrintFieldSelection(Field field) => PrintField(field, Settings.SelectionFieldBackground);
+        public static void PrintField(Field field, ConsoleColor background)
         {
-            SetCursorPosition((field.Coordinates.Column.Index + 1) * 4, (field.Coordinates.Row.Index + 1) * 2);
+            SetCursorPosition((field.Coordinates.Column + 1) * Settings.ColumnWidth, (field.Coordinates.Row + 1) * Settings.RowHeight);
             SetCursorColor(field.Pawn);
+            BackgroundColor = background;
             Write(GetFieldText(field));
-        }
-
-        public static void PrintPawnSelection(Pawn pawn)
-        {
-            SetCursorPosition((pawn.Field.Coordinates.Column + 1) * 4, (pawn.Field.Coordinates.Row + 1) * 2);
-            SetCursorColor(pawn);
-            BackgroundColor = Settings.SelectionPawnBackground;
-            Write(GetFieldText(pawn.Field));
-            BackgroundColor = Settings.DefaultBackground;
-        }
-
-        public static void PrintSelectedPawn(Pawn pawn)
-        {
-            SetCursorPosition((pawn.Field.Coordinates.Column + 1) * 4, (pawn.Field.Coordinates.Row + 1) * 2);
-            SetCursorColor(pawn);
-            BackgroundColor = Settings.SelectedPawnBackground;
-            Write(GetFieldText(pawn.Field));
             BackgroundColor = Settings.DefaultBackground;
         }
 

@@ -8,8 +8,8 @@ namespace Hnefatafl.Console.Tools
     {
         public static class Settings
         {
-            public static ConsoleColor PrefixColor { get; set; } = ConsoleColor.DarkYellow;
-            public static ConsoleColor SecondPrefixColor { get; set; } = ConsoleColor.Yellow;
+            public static ConsoleColor PrefixColor { get; } = ConsoleColor.DarkYellow;
+            public static ConsoleColor SecondPrefixColor { get; } = ConsoleColor.Yellow;
         }
 
         const string CURRENT_PLAYER_PREFIX = "Current player: ";
@@ -26,13 +26,17 @@ namespace Hnefatafl.Console.Tools
 
         const string CHOOSE_PAWN_PREFIX = "Choose pawn to move: ";
         public static void PrintCommand() => ConsoleWriter.Print(0, 1, CHOOSE_PAWN_PREFIX, Settings.SecondPrefixColor);
-        private static void ResetCursor() => System.Console.SetCursorPosition(CHOOSE_PAWN_PREFIX.Length, ConsoleWriter.Settings.COMMUNICATION_ROW + 1);
+        private static void ResetCursor() => System.Console.SetCursorPosition(CHOOSE_PAWN_PREFIX.Length, ConsoleWriter.Settings.CommunicationRow + 1);
 
         private static string? LastErrorMessagePrinted { get; set; } = null;
 
         public static Pawn SelectPawn(Board board)
         {
             ResetCursor();
+
+            // mark all available pawns
+            //foreach (Pawn pawn in board.Game.CurrentPlayerAvailablePawns)
+
 
             Field fieldCursor = board[Board.MIDDLE_INDEX, Board.MIDDLE_INDEX];
 
@@ -56,8 +60,9 @@ namespace Hnefatafl.Console.Tools
                                or ConsoleKey.RightArrow
                                or ConsoleKey.DownArrow)
                 {
-                    BoardDrawer.PrintField(fieldCursor);
-                    fieldCursor = JumpToNextPlayersPawn(board, fieldCursor, pressedKey);
+                    if (fieldCursor.Pawn?.Player == board.Game.CurrentPlayer)
+                        BoardDrawer.PrintPawnAvailability(fieldCursor.Pawn);
+                    fieldCursor = JumpToNextPlayerPawn(board, fieldCursor, pressedKey);
                     BoardDrawer.PrintPawnSelection(fieldCursor.Pawn!);
                     ResetCursor();
                     continue;
@@ -78,17 +83,28 @@ namespace Hnefatafl.Console.Tools
                 ConsoleKey pressedKey = System.Console.ReadKey(true).Key;
 
                 ClearErrorMessage();
-
-
-
+                //todo
+                JumpToNextPawnAvailableField(board, pawn, fieldCursor, pressedKey);
+                //todo
                 PrintErrorMessage("Choose pawn using arrows.");
             }
         }
 
-        private static Field JumpToNextPlayersPawn(Board board, Field currentField, ConsoleKey pressedKey)
+        private static Field JumpToNextPlayerPawn(Board board, Field currentField, ConsoleKey pressedKey)
         {
             var fields = board.Game.CurrentPlayerAvailablePawns.Select(x => x.Field);
-            var fieldsInfo = ComputeFieldsAdditionalInfo(fields, currentField, pressedKey);
+            return JumpToNextField(fields, currentField, pressedKey);
+        }
+
+        private static Field JumpToNextPawnAvailableField(Board board, Pawn pawn, Field currentField, ConsoleKey pressedKey)
+        {
+            var fields = board.GetPawnAvailableFields(pawn);
+            return JumpToNextField(fields, currentField, pressedKey);
+        }
+
+        private static Field JumpToNextField(IEnumerable<Field> availableFields, Field currentField, ConsoleKey pressedKey)
+        {
+            var fieldsInfo = ComputeFieldsAdditionalInfo(availableFields, currentField, pressedKey);
             var newSelectedField = fieldsInfo.OrderBy(x => RateField(x.Angle, x.Distance)).Select(x => x.Field).FirstOrDefault();
             return newSelectedField ?? currentField;
             static double RateField(double angle, double distance) => (angle + 1) * distance;

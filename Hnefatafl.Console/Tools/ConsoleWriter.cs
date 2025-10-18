@@ -7,13 +7,13 @@ namespace Hnefatafl.Console.Tools
     {
         public class Settings
         {
-            public const int COMMUNICATION_ROW = (Board.SIZE + 1) * 2;
-            public static ConsoleColor DefaultColor { get; set; } = ConsoleColor.White;
+            public static int CommunicationRow = (Board.SIZE + 1) * BoardDrawer.Settings.RowHeight;
+            public static ConsoleColor DefaultColor { get; } = ConsoleColor.White;
         }
 
         public static void Print(int left, int top, object text, ConsoleColor color, ConsoleColor background = ConsoleColor.Black)
         {
-            SetCursorPosition(left, Settings.COMMUNICATION_ROW + top);
+            SetCursorPosition(left, Settings.CommunicationRow + top);
             Print(text, color, background);
         }
 
