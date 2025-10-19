@@ -1,6 +1,8 @@
-﻿using Hnefatafl.Engine.Enums;
+﻿using Hnefatafl.Console.Enums;
+using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
+using KrzaqTools.Extensions;
 using static System.Console;
 
 namespace Hnefatafl.Console.Tools
@@ -16,13 +18,10 @@ namespace Hnefatafl.Console.Tools
             public static ConsoleColor KingColor { get; } = ConsoleColor.Yellow;
             public static ConsoleColor DefenderColor { get; } = ConsoleColor.Green;
             public static ConsoleColor AttackerColor { get; } = ConsoleColor.Red;
-            public static ConsoleColor SpecialFieldColor { get; } = ConsoleColor.DarkMagenta;
-            public static ConsoleColor DefaultBackground { get; } = ConsoleColor.Black;
-            public static ConsoleColor AvailablePawnBackground { get; } = ConsoleColor.DarkCyan;
-            public static ConsoleColor SelectionPawnBackground { get; } = ConsoleColor.Cyan;
-            public static ConsoleColor SelectedPawnBackground { get; } = ConsoleColor.DarkCyan;
-            public static ConsoleColor AvailableFieldBackground { get; } = ConsoleColor.DarkCyan;
-            public static ConsoleColor SelectionFieldBackground { get; } = ConsoleColor.Cyan;
+            public static ConsoleColor AvailableFieldColor { get; } = ConsoleColor.DarkMagenta;
+            public static ConsoleColor AvailableFieldSelectionColor { get; } = ConsoleColor.Magenta;
+            public static ConsoleColor DefaultBackgroundColor { get; } = ConsoleColor.Black;
+            public static ConsoleColor PawnSelectionBackgroundColor { get; } = ConsoleColor.DarkGray;
         }
 
         private static readonly string EMPTY_FIELD = string.Empty.PadLeft(Settings.ColumnWidth - 1, ' ');
@@ -32,6 +31,9 @@ namespace Hnefatafl.Console.Tools
 
         public static void PrintBoard()
         {
+            CursorVisible = false;
+            BackgroundColor = Settings.DefaultBackgroundColor;
+
             int width = (Board.SIZE + 1) * Settings.ColumnWidth;
             int height = ConsoleWriter.Settings.CommunicationRow + 4;
 
@@ -70,45 +72,50 @@ namespace Hnefatafl.Console.Tools
             }
         }
 
-        public static void PrintPawns(Board board)
-        {
-            foreach (Pawn pawn in board.GetPawns(Player.All, false))
-                PrintField(pawn.Field, Settings.DefaultBackground);
-        }
+        public static void PrintFields(IEnumerable<Field> fields, FieldDrawMode mode) => fields.ForEach(field => PrintField(field, mode));
 
-        public static void PrintPawnAvailability(Pawn pawn) => PrintField(pawn.Field, Settings.AvailablePawnBackground);
-        public static void PrintPawnSelection(Pawn pawn) => PrintField(pawn.Field, Settings.SelectionPawnBackground);
-        public static void PrintSelectedPawn(Pawn pawn) => PrintField(pawn.Field, Settings.SelectedPawnBackground);
-
-        public static void PrintFieldAvailability(Field field) => PrintField(field, Settings.AvailableFieldBackground);
-        public static void PrintFieldSelection(Field field) => PrintField(field, Settings.SelectionFieldBackground);
-        public static void PrintField(Field field, ConsoleColor background)
+        public static void PrintField(Field field, FieldDrawMode mode)
         {
             SetCursorPosition((field.Coordinates.Column + 1) * Settings.ColumnWidth, (field.Coordinates.Row + 1) * Settings.RowHeight);
-            SetCursorColor(field.Pawn);
-            BackgroundColor = background;
-            Write(GetFieldText(field));
-            BackgroundColor = Settings.DefaultBackground;
+            SetCursorColor(field.Pawn, mode);
+            Write(GetFieldText(field, mode));
         }
 
-        private static void SetCursorColor(Pawn? pawn)
+        private static void SetCursorColor(Pawn? pawn, FieldDrawMode mode)
         {
-            ForegroundColor = pawn switch
+            BackgroundColor = (pawn, mode) switch
             {
-                King => Settings.KingColor,
-                Defender => Settings.DefenderColor,
-                Attacker => Settings.AttackerColor,
-                _ => Settings.SpecialFieldColor,
+                (Pawn, FieldDrawMode.Selection) => Settings.PawnSelectionBackgroundColor,
+                _ => Settings.DefaultBackgroundColor
+            };
+            ForegroundColor = (pawn, mode) switch
+            {
+                (King, _) => Settings.KingColor,
+                (Defender, _) => Settings.DefenderColor,
+                (Attacker, _) => Settings.AttackerColor,
+                (_, FieldDrawMode.Available) => Settings.AvailableFieldColor,
+                (_, FieldDrawMode.Selection) => Settings.AvailableFieldSelectionColor,
+                _ => Settings.GridColor,
             };
         }
 
-        private static string GetFieldText(Field field)
+        private static string GetFieldText(Field field, FieldDrawMode mode)
         {
             char sign = field.GetCharRepresentation();
-            if (char.IsWhiteSpace(sign)
-            && (field.IsCenter || field.IsCorner))
+
+            if ((field.IsCenter || field.IsCorner) && char.IsWhiteSpace(sign)
+            || (mode is FieldDrawMode.Selection && field.IsEmpty))
                 sign = 'X';
-            return $" {sign} ";
+
+            if (mode is FieldDrawMode.Available && field.IsEmpty)
+                sign = '+';
+
+            return (mode, field.IsEmpty) switch
+            {
+                (FieldDrawMode.Available, false) => $"({sign})",
+                (FieldDrawMode.Selected, _) => $"[{sign}]",
+                _ => $" {sign} ",
+            };
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Hnefatafl.Engine.Enums;
+﻿using Hnefatafl.Console.Enums;
+using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
 
@@ -10,6 +11,7 @@ namespace Hnefatafl.Console.Tools
         {
             public static ConsoleColor PrefixColor { get; } = ConsoleColor.DarkYellow;
             public static ConsoleColor SecondPrefixColor { get; } = ConsoleColor.Yellow;
+            public static ConsoleColor CoordinatesColor { get; } = ConsoleColor.Magenta;
         }
 
         const string CURRENT_PLAYER_PREFIX = "Current player: ";
@@ -24,35 +26,68 @@ namespace Hnefatafl.Console.Tools
             });
         }
 
-        const string CHOOSE_PAWN_PREFIX = "Choose pawn to move: ";
-        public static void PrintCommand() => ConsoleWriter.Print(0, 1, CHOOSE_PAWN_PREFIX, Settings.SecondPrefixColor);
-        private static void ResetCursor() => System.Console.SetCursorPosition(CHOOSE_PAWN_PREFIX.Length, ConsoleWriter.Settings.CommunicationRow + 1);
+        const string CURRENT_FIELD_PREFIX = "Current field: ";
+        public static void PrintCurrentFieldPrefix() => ConsoleWriter.Print(0, 1, CURRENT_FIELD_PREFIX, Settings.SecondPrefixColor);
+        public static void PrintCurrentField(Field? field) => ConsoleWriter.Print(CURRENT_FIELD_PREFIX.Length, 1, $"{field?.Coordinates}".PadRight(BoardDrawer.Settings.ColumnWidth), Settings.CoordinatesColor);
 
         private static string? LastErrorMessagePrinted { get; set; } = null;
 
+        public static void GetPlayerMove(Board board, out Pawn pawn, out Field field)
+        {
+            pawn = null!;
+            field = null!;
+            while (field is null)
+            {
+                pawn = SelectPawn(board);
+                field = SelectTargetField(board, pawn)!;
+            }
+        }
+
         public static Pawn SelectPawn(Board board)
         {
-            ResetCursor();
+            var availableFields = board.Game.CurrentPlayerAvailablePawns.Select(pawn => pawn.Field);
+            Field initialField = board[Board.MIDDLE_INDEX, Board.MIDDLE_INDEX];
+            Field? selectedPawnField = null;
+            while (selectedPawnField is null)
+                selectedPawnField = SelectField(availableFields, initialField, IsFromCurrentPlayerAvailablePawns);
+            return selectedPawnField.Pawn!;
+            bool IsFromCurrentPlayerAvailablePawns(Field cursor) => !cursor.IsEmpty && availableFields.Contains(cursor);
+        }
 
-            // mark all available pawns
-            //foreach (Pawn pawn in board.Game.CurrentPlayerAvailablePawns)
+        public static Field? SelectTargetField(Board board, Pawn pawn)
+        {
+            var availableFields = board.GetPawnAvailableFields(pawn);
+            Field? selectedField = SelectField(availableFields, pawn.Field, fieldCursor => fieldCursor.IsEmpty);
+            PrintCurrentField(null);
+            return selectedField;
+        }
 
+        public static Field? SelectField(IEnumerable<Field> availableFields, Field initialField, Func<Field, bool> validSelectionCondition)
+        {
+            foreach (Field field in availableFields)
+                BoardDrawer.PrintField(field, FieldDrawMode.Available);
 
-            Field fieldCursor = board[Board.MIDDLE_INDEX, Board.MIDDLE_INDEX];
-
+            Field fieldCursor = initialField;
             while (true)
             {
                 ConsoleKey pressedKey = System.Console.ReadKey(true).Key;
 
                 ClearErrorMessage();
 
+                if (pressedKey is ConsoleKey.Escape
+                               or ConsoleKey.Backspace)
+                {
+                    return null;
+                }
+
                 if (pressedKey is ConsoleKey.Enter
                                or ConsoleKey.Spacebar
-                && fieldCursor.Pawn?.Player == board.Game.CurrentPlayer)
+                && validSelectionCondition.Invoke(fieldCursor))
                 {
-                    BoardDrawer.PrintSelectedPawn(fieldCursor.Pawn);
-                    ResetCursor();
-                    return fieldCursor.Pawn;
+                    foreach (Field field in availableFields)
+                        BoardDrawer.PrintField(field, FieldDrawMode.Default);
+                    BoardDrawer.PrintField(fieldCursor, FieldDrawMode.Selected);
+                    return fieldCursor;
                 }
 
                 if (pressedKey is ConsoleKey.LeftArrow
@@ -60,54 +95,25 @@ namespace Hnefatafl.Console.Tools
                                or ConsoleKey.RightArrow
                                or ConsoleKey.DownArrow)
                 {
-                    if (fieldCursor.Pawn?.Player == board.Game.CurrentPlayer)
-                        BoardDrawer.PrintPawnAvailability(fieldCursor.Pawn);
-                    fieldCursor = JumpToNextPlayerPawn(board, fieldCursor, pressedKey);
-                    BoardDrawer.PrintPawnSelection(fieldCursor.Pawn!);
-                    ResetCursor();
+                    if (validSelectionCondition.Invoke(fieldCursor))
+                        BoardDrawer.PrintField(fieldCursor, FieldDrawMode.Available);
+                    fieldCursor = JumpToNextField(availableFields, fieldCursor, pressedKey);
+                    BoardDrawer.PrintField(fieldCursor, FieldDrawMode.Selection);
+                    PrintCurrentField(fieldCursor);
                     continue;
                 }
 
-                PrintErrorMessage("Choose pawn using arrows.");
+                PrintErrorMessage("Use arrows or enter/space to confirm selection!");
             }
         }
 
-        public static Field SelectTargetField(Board board, Pawn pawn)
-        {
-            ResetCursor();
-
-            Field fieldCursor = pawn.Field;
-
-            while (true)
-            {
-                ConsoleKey pressedKey = System.Console.ReadKey(true).Key;
-
-                ClearErrorMessage();
-                //todo
-                JumpToNextPawnAvailableField(board, pawn, fieldCursor, pressedKey);
-                //todo
-                PrintErrorMessage("Choose pawn using arrows.");
-            }
-        }
-
-        private static Field JumpToNextPlayerPawn(Board board, Field currentField, ConsoleKey pressedKey)
-        {
-            var fields = board.Game.CurrentPlayerAvailablePawns.Select(x => x.Field);
-            return JumpToNextField(fields, currentField, pressedKey);
-        }
-
-        private static Field JumpToNextPawnAvailableField(Board board, Pawn pawn, Field currentField, ConsoleKey pressedKey)
-        {
-            var fields = board.GetPawnAvailableFields(pawn);
-            return JumpToNextField(fields, currentField, pressedKey);
-        }
 
         private static Field JumpToNextField(IEnumerable<Field> availableFields, Field currentField, ConsoleKey pressedKey)
         {
-            var fieldsInfo = ComputeFieldsAdditionalInfo(availableFields, currentField, pressedKey);
+            var fieldsInfo = ComputeFieldsAdditionalInfo(availableFields.Except([currentField]), currentField, pressedKey);
             var newSelectedField = fieldsInfo.OrderBy(x => RateField(x.Angle, x.Distance)).Select(x => x.Field).FirstOrDefault();
             return newSelectedField ?? currentField;
-            static double RateField(double angle, double distance) => (angle + 1) * distance;
+            static double RateField(double angle, double distance) => Math.Pow(angle + 1, 2) * distance;
         }
 
         private static IEnumerable<(Field Field, double Angle, double Distance)> ComputeFieldsAdditionalInfo(IEnumerable<Field> fields, Field currentField, ConsoleKey pressedKey)
@@ -115,29 +121,14 @@ namespace Hnefatafl.Console.Tools
             foreach (Field field in fields)
             {
                 var (rows, columns) = field.Coordinates - currentField.Coordinates;
-                switch (pressedKey)
+                switch (pressedKey, Math.Sign(rows), Math.Sign(columns))
                 {
-                    case ConsoleKey.LeftArrow:
-                        if (columns < 0 && Math.Abs(rows) <= -columns)
-                            yield return (field, Math.Atan2(Math.Abs(rows), -columns), GetDistance());
-                        break;
-                    case ConsoleKey.UpArrow:
-                        if (rows < 0 && Math.Abs(columns) <= -rows)
-                            yield return (field, Math.Atan2(Math.Abs(columns), -rows), GetDistance());
-                        break;
-                    case ConsoleKey.RightArrow:
-                        if (columns > 0 && Math.Abs(rows) <= columns)
-                            yield return (field, Math.Atan2(Math.Abs(rows), columns), GetDistance());
-                        break;
-                    case ConsoleKey.DownArrow:
-                        if (rows > 0 && Math.Abs(columns) <= rows)
-                            yield return (field, Math.Atan2(Math.Abs(columns), rows), GetDistance());
-                        break;
-                    default:
-                        throw new InvalidOperationException($"Invalid key [{pressedKey}]");
+                    case (ConsoleKey.LeftArrow, _, -1): yield return (field, Math.Atan2(Math.Abs(rows), -columns), GetDistance()); break;
+                    case (ConsoleKey.UpArrow, -1, _): yield return (field, Math.Atan2(Math.Abs(columns), -rows), GetDistance()); break;
+                    case (ConsoleKey.RightArrow, _, 1): yield return (field, Math.Atan2(Math.Abs(rows), columns), GetDistance()); break;
+                    case (ConsoleKey.DownArrow, 1, _): yield return (field, Math.Atan2(Math.Abs(columns), rows), GetDistance()); break;
                 }
-
-                double GetDistance() => Math.Sqrt(columns * columns + rows * rows);
+                double GetDistance() => Math.Sqrt(rows * rows + columns * columns);
             }
         }
 
@@ -146,7 +137,6 @@ namespace Hnefatafl.Console.Tools
             if (LastErrorMessagePrinted is not null)
             {
                 ConsoleWriter.Print(0, 2, string.Empty.PadRight(LastErrorMessagePrinted.Length), ConsoleColor.DarkRed);
-                ResetCursor();
                 LastErrorMessagePrinted = null;
             }
         }
@@ -154,7 +144,6 @@ namespace Hnefatafl.Console.Tools
         private static void PrintErrorMessage(string message)
         {
             ConsoleWriter.Print(0, 2, LastErrorMessagePrinted = message, ConsoleColor.DarkRed);
-            ResetCursor();
         }
     }
 }
