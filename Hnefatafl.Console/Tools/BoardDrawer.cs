@@ -1,5 +1,4 @@
 ﻿using Hnefatafl.Console.Enums;
-using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
 using KrzaqTools.Extensions;
@@ -21,7 +20,7 @@ namespace Hnefatafl.Console.Tools
             public static ConsoleColor AvailableFieldColor { get; } = ConsoleColor.DarkMagenta;
             public static ConsoleColor AvailableFieldSelectionColor { get; } = ConsoleColor.Magenta;
             public static ConsoleColor DefaultBackgroundColor { get; } = ConsoleColor.Black;
-            public static ConsoleColor PawnSelectionBackgroundColor { get; } = ConsoleColor.DarkGray;
+            public static ConsoleColor DefaultColor { get; } = ConsoleColor.White;
         }
 
         private static readonly string EMPTY_FIELD = string.Empty.PadLeft(Settings.ColumnWidth - 1, ' ');
@@ -83,11 +82,6 @@ namespace Hnefatafl.Console.Tools
 
         private static void SetCursorColor(Pawn? pawn, FieldDrawMode mode)
         {
-            BackgroundColor = (pawn, mode) switch
-            {
-                (Pawn, FieldDrawMode.Selection) => Settings.PawnSelectionBackgroundColor,
-                _ => Settings.DefaultBackgroundColor
-            };
             ForegroundColor = (pawn, mode) switch
             {
                 (King, _) => Settings.KingColor,
@@ -97,6 +91,9 @@ namespace Hnefatafl.Console.Tools
                 (_, FieldDrawMode.Selection) => Settings.AvailableFieldSelectionColor,
                 _ => Settings.GridColor,
             };
+
+            if (mode is FieldDrawMode.Selection && pawn is not null)
+                (ForegroundColor, BackgroundColor) = (BackgroundColor, ForegroundColor);
         }
 
         private static string GetFieldText(Field field, FieldDrawMode mode)

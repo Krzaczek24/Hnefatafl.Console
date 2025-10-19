@@ -2,7 +2,6 @@
 using Hnefatafl.Console.Tools;
 using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
-using Hnefatafl.Engine.Models.Pawns;
 
 namespace Hnefatafl.Console
 {
@@ -26,7 +25,7 @@ namespace Hnefatafl.Console
                 Chat.GetPlayerMove(game.Board, out var pawn, out var newField);
 
                 var oldField = pawn.Field;
-                if (game.MakeMove(pawn, newField) is MoveResult.Success)
+                if (game.MakeMove(pawn, newField) is MoveValidationResult.Success)
                 {
                     BoardDrawer.PrintField(oldField, FieldDrawMode.Default);
                     BoardDrawer.PrintField(newField, FieldDrawMode.Default);
