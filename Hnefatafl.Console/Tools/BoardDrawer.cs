@@ -82,6 +82,7 @@ namespace Hnefatafl.Console.Tools
 
         private static void SetCursorColor(Pawn? pawn, FieldDrawMode mode)
         {
+            BackgroundColor = Settings.DefaultBackgroundColor;
             ForegroundColor = (pawn, mode) switch
             {
                 (King, _) => Settings.KingColor,

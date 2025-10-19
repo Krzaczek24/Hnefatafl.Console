@@ -38,18 +38,18 @@ namespace Hnefatafl.Console.Tools
             field = null!;
             while (field is null)
             {
-                pawn = SelectPawn(board);
+                pawn = SelectPawn(board, pawn?.Field);
                 field = SelectTargetField(board, pawn)!;
             }
         }
 
-        public static Pawn SelectPawn(Board board)
+        public static Pawn SelectPawn(Board board, Field? initialField)
         {
             var availableFields = board.Game.CurrentPlayerAvailablePawns.Select(pawn => pawn.Field);
-            Field initialField = board[Board.MIDDLE_INDEX, Board.MIDDLE_INDEX];
+            PrintCurrentField(initialField);
             Field? selectedPawnField = null;
             while (selectedPawnField is null)
-                selectedPawnField = SelectField(availableFields, initialField, IsFromCurrentPlayerAvailablePawns);
+                selectedPawnField = SelectField(board, availableFields, initialField, IsFromCurrentPlayerAvailablePawns, false);
             return selectedPawnField.Pawn!;
             bool IsFromCurrentPlayerAvailablePawns(Field cursor) => !cursor.IsEmpty && availableFields.Contains(cursor);
         }
@@ -57,15 +57,20 @@ namespace Hnefatafl.Console.Tools
         public static Field? SelectTargetField(Board board, Pawn pawn)
         {
             var availableFields = board.GetPawnAvailableFields(pawn);
-            Field? selectedField = SelectField(availableFields, pawn.Field, fieldCursor => fieldCursor.IsEmpty);
+            Field? selectedField = SelectField(board, availableFields, pawn.Field, fieldCursor => fieldCursor.IsEmpty, true);
             PrintCurrentField(null);
             return selectedField;
         }
 
-        public static Field? SelectField(IEnumerable<Field> availableFields, Field initialField, Func<Field, bool> validSelectionCondition)
+        private static Field? SelectField(Board board, IEnumerable<Field> availableFields, Field? initialField, Func<Field, bool> validSelectionCondition, bool allowEscape)
         {
             foreach (Field field in availableFields)
                 BoardDrawer.PrintField(field, FieldDrawMode.Available);
+
+            if (initialField is null)
+                initialField = board[Board.MIDDLE_INDEX, Board.MIDDLE_INDEX];
+            else
+                BoardDrawer.PrintField(initialField, FieldDrawMode.Selection);
 
             Field fieldCursor = initialField;
             while (true)
@@ -74,14 +79,15 @@ namespace Hnefatafl.Console.Tools
 
                 ClearErrorMessage();
 
-                if (pressedKey is ConsoleKey.Escape
-                               or ConsoleKey.Backspace)
+                if (pressedKey is ConsoleKey.Escape or ConsoleKey.Backspace
+                && allowEscape)
                 {
+                    BoardDrawer.PrintFields(availableFields, FieldDrawMode.Default);
+                    PrintCurrentField(null);
                     return null;
                 }
 
-                if (pressedKey is ConsoleKey.Enter
-                               or ConsoleKey.Spacebar
+                if (pressedKey is ConsoleKey.Enter or ConsoleKey.Spacebar
                 && validSelectionCondition.Invoke(fieldCursor))
                 {
                     foreach (Field field in availableFields)
@@ -130,6 +136,11 @@ namespace Hnefatafl.Console.Tools
                 }
                 double GetDistance() => Math.Sqrt(rows * rows + columns * columns);
             }
+        }
+
+        public static bool GetPlayerDecision()
+        {
+            return true; // todo
         }
 
         private static void ClearErrorMessage()

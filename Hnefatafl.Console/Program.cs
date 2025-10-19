@@ -7,9 +7,11 @@ namespace Hnefatafl.Console
 {
     internal class Program
     {
-        static void Main()
+        static void Main() => Play(NewGame());
+
+        private static Game NewGame()
         {
-             BoardDrawer.PrintBoard();
+            BoardDrawer.PrintBoard();
 
             var game = new Game();
             game.Start();
@@ -19,18 +21,31 @@ namespace Hnefatafl.Console
             Chat.PrintCurrentPlayerPrefix();
             Chat.PrintCurrentFieldPrefix();
 
+            return game;
+        }
+
+        private static void Play(Game game)
+        {
             while (!game.IsGameOver)
             {
                 Chat.PrintCurrentPlayer(game.CurrentPlayer);
                 Chat.GetPlayerMove(game.Board, out var pawn, out var newField);
 
-                var oldField = pawn.Field;
-                if (game.MakeMove(pawn, newField) is MoveValidationResult.Success)
-                {
-                    BoardDrawer.PrintField(oldField, FieldDrawMode.Default);
-                    BoardDrawer.PrintField(newField, FieldDrawMode.Default);
-                }
+                Field oldField = pawn.Field;
+                MoveResult moveResult = game.MakeMove(pawn, newField);
+
+                if (!moveResult.HasFlag(MoveResult.PawnMoved))
+                    throw new InvalidOperationException();
+
+                BoardDrawer.PrintField(oldField, FieldDrawMode.Default);
+                BoardDrawer.PrintField(newField, FieldDrawMode.Default);
+
+                if (moveResult.HasFlag(MoveResult.OpponentPawnKilled))
+                    BoardDrawer.PrintFields(game.Board.GetAdjacentFields(newField), FieldDrawMode.Default);
             }
+
+            if (Chat.GetPlayerDecision())
+                game.Start();
         }
     }
 }
