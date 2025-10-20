@@ -32,20 +32,20 @@ namespace Hnefatafl.Console.Tools
 
         private static string? LastErrorMessagePrinted { get; set; } = null;
 
-        public static void GetPlayerMove(Board board, out Pawn pawn, out Field field)
+        public static void GetPlayerMove(Board board, Player player, out Pawn pawn, out Field field)
         {
             pawn = null!;
             field = null!;
             while (field is null)
             {
-                pawn = SelectPawn(board, pawn?.Field);
+                pawn = SelectPawn(board, player, pawn?.Field);
                 field = SelectTargetField(board, pawn)!;
             }
         }
 
-        public static Pawn SelectPawn(Board board, Field? initialField)
+        public static Pawn SelectPawn(Board board, Player player, Field? initialField)
         {
-            var availableFields = board.Game.CurrentPlayerAvailablePawns.Select(pawn => pawn.Field);
+            var availableFields = board.GetPawns(player).Where(board.CanMove).Select(pawn => pawn.Field);
             PrintCurrentField(initialField);
             Field? selectedPawnField = null;
             while (selectedPawnField is null)
@@ -138,10 +138,13 @@ namespace Hnefatafl.Console.Tools
             }
         }
 
-        public static bool GetPlayerDecision()
+        public static bool GetPlayerDecision(string question)
         {
-            return true; // todo
+            ConsoleWriter.Print(0, 1, question.PadRight(System.Console.BufferWidth), ConsoleColor.DarkRed);
+            return System.Console.ReadKey(true).Key is ConsoleKey.Y or ConsoleKey.Enter;
         }
+
+        public static void PrintWinner() => PrintErrorMessage("YOU WIN");
 
         private static void ClearErrorMessage()
         {
@@ -154,6 +157,7 @@ namespace Hnefatafl.Console.Tools
 
         private static void PrintErrorMessage(string message)
         {
+            ClearErrorMessage();
             ConsoleWriter.Print(0, 2, LastErrorMessagePrinted = message, ConsoleColor.DarkRed);
         }
     }

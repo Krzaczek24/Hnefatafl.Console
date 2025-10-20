@@ -1,14 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageProjectUrl>https://github.com/Krzaczek24?tab=packages</PackageProjectUrl>
+        <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+        <RepositoryUrl>https://github.com/Krzaczek24/KrzaqTools</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageId>Krzaq.Hnefatafl.Engine</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Tomasz 'Krzaczek' Drewek</Authors>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.Core\Hnefatafl.Engine.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.Core\Hnefatafl.Engine.csproj" />
+    </ItemGroup>
 
 </Project>
