@@ -32,13 +32,13 @@ namespace Hnefatafl.Console.Tools
         {
             CursorVisible = false;
             BackgroundColor = Settings.DefaultBackgroundColor;
-
-            int width = (Board.SIZE + 1) * Settings.ColumnWidth;
-            int height = ConsoleWriter.Settings.CommunicationRow + 4;
-
-            SetWindowSize(width, height);
             if (OperatingSystem.IsWindows())
+            {
+                int width = (Board.SIZE + 1) * Settings.ColumnWidth + 1;
+                int height = ConsoleWriter.Settings.CommunicationRow + 4;
+                SetWindowSize(width, height);
                 SetBufferSize(width, height);
+            }
             Clear();
             PrintGrid();
             PrintHeaders();
