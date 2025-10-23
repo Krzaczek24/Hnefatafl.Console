@@ -9,7 +9,7 @@
         <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
         <RepositoryUrl>https://github.com/Krzaczek24/KrzaqTools</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <PackageId>Krzaq.Hnefatafl.Engine</PackageId>
+        <PackageId>Krzaq.Hnefatafl.Console</PackageId>
         <Version>1.0.0</Version>
         <Authors>Tomasz 'Krzaczek' Drewek</Authors>
         <PackageReadmeFile>README.md</PackageReadmeFile>
