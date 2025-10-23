@@ -10,6 +10,7 @@ namespace Hnefatafl.Console.Tools
     {
         public static class Settings
         {
+            public static int MoveAnimation { get; set; }
             public static int ColumnWidth { get; } = 4;
             public static int RowHeight { get; } = 2;
             public static ConsoleColor HeadersColor { get; } = ConsoleColor.White;
@@ -30,12 +31,13 @@ namespace Hnefatafl.Console.Tools
 
         public static void PrintBoard()
         {
+            
             CursorVisible = false;
             BackgroundColor = Settings.DefaultBackgroundColor;
             if (OperatingSystem.IsWindows())
             {
                 int width = (Board.SIZE + 1) * Settings.ColumnWidth + 1;
-                int height = ConsoleWriter.Settings.CommunicationRow + 4;
+                int height = ConsoleWriter.Settings.CommunicationRow + 5;
                 SetWindowSize(width, height);
                 SetBufferSize(width, height);
             }
@@ -80,7 +82,7 @@ namespace Hnefatafl.Console.Tools
             Write(GetFieldText(field, mode));
         }
 
-        public static void PrintPawnMoveAnimation(Board board, Field startField, Field endField, int interval)
+        public static void PrintPawnMoveAnimation(Board board, Field startField, Field endField)
         {
             Pawn pawn = endField.Pawn ?? startField.Pawn!;
             string pawnFieldText = GetFieldText(pawn.Field, FieldDrawMode.Default);
@@ -89,7 +91,7 @@ namespace Hnefatafl.Console.Tools
             (rowIncrement, colIncrement) = (Math.Sign(rowIncrement), Math.Sign(colIncrement));
             for (var (row, column) = startField.Coordinates; new Coordinates(row, column) != endField.Coordinates; row += rowIncrement, column += colIncrement)
             {
-                Thread.Sleep(interval);
+                Thread.Sleep(Settings.MoveAnimation);
 
                 PrintField(board[row, column], FieldDrawMode.Default);
 
@@ -97,7 +99,7 @@ namespace Hnefatafl.Console.Tools
                 SetCursorPosition((column + 1 + colIncrement) * Settings.ColumnWidth, (row + 1 + rowIncrement) * Settings.RowHeight);
                 Write(pawnFieldText);
             }
-            Thread.Sleep(interval);
+            Thread.Sleep(Settings.MoveAnimation);
         }
 
         private static void SetCursorColor(Pawn? pawn, FieldDrawMode mode)

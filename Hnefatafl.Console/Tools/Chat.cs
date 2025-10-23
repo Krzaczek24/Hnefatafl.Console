@@ -1,9 +1,8 @@
 ﻿using Hnefatafl.Console.Enums;
-using Hnefatafl.Engine.AI;
+using Hnefatafl.Console.Models;
 using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
-using System.Collections.Frozen;
 
 namespace Hnefatafl.Console.Tools
 {
@@ -27,12 +26,12 @@ namespace Hnefatafl.Console.Tools
         public static void PrintCurrentFieldPrefix() => ConsoleWriter.Print(0, 1, CURRENT_FIELD_PREFIX, Settings.SecondLineColor);
         public static void PrintCurrentField(Field? field) => ConsoleWriter.Print(CURRENT_FIELD_PREFIX.Length, 1, $"{field?.Coordinates}", Settings.CoordinatesColor);
 
-        const string AI_IS_THINKING = "AI opponent is thinking ...";
-        public static void PrintAiIsThinking() => ConsoleWriter.Print(0, 1, AI_IS_THINKING, Settings.SecondLineColor);
+        const string WAITING_FOR_OPPONENT_MOVE = "Waiting for opponent move ...";
+        public static void PrintOpponentIsThinking() => ConsoleWriter.Print(0, 1, WAITING_FOR_OPPONENT_MOVE, Settings.SecondLineColor);
 
-        const string AI_MOVING = "AI moved pawn from {0} to {1}";
-        public static void PrintAiMove(Field from, Field to) => ConsoleWriter.Print(0, 2, string.Format(AI_MOVING, from.Coordinates, to.Coordinates), Settings.ThirdLineColor);
-        public static void ClearAiMove() => ConsoleWriter.Print(0, 2, string.Empty, Settings.ThirdLineColor);
+        const string OPPONENT_MOVED_PAWN = "Opponent moved pawn from {0} to {1}";
+        public static void PrintOpponentMove(Field from, Field to) => ConsoleWriter.Print(0, 2, string.Format(OPPONENT_MOVED_PAWN, from.Coordinates, to.Coordinates), Settings.ThirdLineColor);
+        public static void ClearOpponentMove() => ConsoleWriter.Print(0, 2, string.Empty, Settings.ThirdLineColor);
 
         private static string? LastErrorMessagePrinted { get; set; } = null;
 
@@ -142,38 +141,96 @@ namespace Hnefatafl.Console.Tools
             }
         }
 
-        public static bool AskPlayerQuestion(string question, IEnumerable<ConsoleKey> trueKeys) => AskPlayerQuestion(question, trueKeys, [], out _) ?? false;
-        public static bool? AskPlayerQuestion(string question, IEnumerable<ConsoleKey> trueKeys, IEnumerable<ConsoleKey> falseKeys) => AskPlayerQuestion(question, trueKeys, falseKeys, out _);
-        private static bool? AskPlayerQuestion(string question, IEnumerable<ConsoleKey> trueKeys, IEnumerable<ConsoleKey> falseKeys, out ConsoleKey playerKey)
-        {
-            ConsoleWriter.Print(0, 2, question, Settings.ThirdLineColor);
-            playerKey = System.Console.ReadKey(true).Key;
-            ConsoleWriter.Print(0, 2, string.Empty, Settings.ThirdLineColor);
-            if (trueKeys.Contains(playerKey))
-                return true;
-            if (falseKeys.Contains(playerKey))
-                return false;
-            return null;
-        }
-
-        private static IEnumerable<string> AiLevelNames { get; } = Enum.GetNames<AiLevel>();
-        private static IReadOnlyDictionary<ConsoleKey, AiLevel> AiLevels { get; } = Enum.GetValues<AiLevel>().ToFrozenDictionary(x => Enum.Parse<ConsoleKey>($"{x}"[..1], false), x => x);
-        public static AiLevel? GetAiLevel()
+        public static ConsoleKey GetPlayerKey(string printText, params ConsoleKey[] allowedKeys)
         {
             ConsoleKey playerKey;
-            while (!AskPlayerQuestion($"Want to play with AI? {string.Join(", ", AiLevelNames.Select(x => $"[{x[0]}]{x[1..]}"))} [N]o",
-                AiLevels.Keys, [ConsoleKey.N, ConsoleKey.Escape], out playerKey).HasValue) { } ;
-            return AiLevels.TryGetValue(playerKey, out AiLevel aiLevel) ? aiLevel : null;
+            do
+            {
+                ConsoleWriter.Print(0, 2, printText, Settings.ThirdLineColor);
+                playerKey = System.Console.ReadKey(true).Key;
+                ConsoleWriter.Print(0, 2, string.Empty, Settings.ThirdLineColor);
+            }
+            while (allowedKeys?.Length > 0 && !allowedKeys.Contains(playerKey));
+            return playerKey;
         }
 
-        public static Side GetPlayerSide()
+        public static bool AskPlayerYesNoQuestion(string question)
+            => AskPlayerQuestion($"{question} [Y]es/[N]o: ", [ConsoleKey.Y, ConsoleKey.Enter], [ConsoleKey.N, ConsoleKey.Escape]);
+        public static bool AskPlayerQuestion(string question, params ConsoleKey[] trueKeys) => AskPlayerQuestion(question, trueKeys, []);
+        public static bool AskPlayerQuestion(string question, IEnumerable<ConsoleKey> trueKeys, IEnumerable<ConsoleKey> falseKeys)
         {
-            bool? playAsAttackers = null;
-            while (playAsAttackers is null)
-                playAsAttackers = AskPlayerQuestion("Choose your side [A]ttackers or [D]efenders: ",
-                    [ConsoleKey.A], [ConsoleKey.D]);
+            ConsoleKey[] allowedKeys = [..trueKeys, ..falseKeys];
+            if (allowedKeys.Length == 0)
+                throw new ArgumentException("Provide atleast one true/false key");
+            ConsoleKey playerKey = GetPlayerKey(question, allowedKeys);
+            return trueKeys.Contains(playerKey);
+        }
 
-            return playAsAttackers!.Value ? Side.Attackers : Side.Defenders;
+        private static Side GetPlayerSide()
+        {
+            bool playAsAttackers = AskPlayerQuestion("Choose your side [A]ttackers or [D]efenders: ", [ConsoleKey.A], [ConsoleKey.D]);
+            return playAsAttackers ? Side.Attackers : Side.Defenders;
+        }
+
+        private static GameMode GetGameMode()
+        {
+            ConsoleKey key = GetPlayerKey(
+                "Select mode:\n[S]ingleplayer, [H]ot-seat, [O]nline, [A]i demo",
+                [ConsoleKey.S, ConsoleKey.H, ConsoleKey.O, ConsoleKey.A]);
+
+            ConsoleWriter.Print(0, 3, string.Empty, Settings.DefaultColor);
+
+            return key switch
+            {
+                ConsoleKey.S => GameMode.Singleplayer,
+                ConsoleKey.H => GameMode.Hotseat,
+                ConsoleKey.O => GameMode.Online,
+                _ => GameMode.AiDemo,
+            };
+        }
+
+        const string URI_PREFIX = "ws://";
+        const string URI_SUFFIX = ":7777/";
+        private static Uri GetPlayerHostUriInput()
+        {
+            while (true)
+            {
+                ConsoleWriter.Print(0, 2, "Provide host address: ", Settings.ThirdLineColor, true);
+
+                ConsoleWriter.ShowCursor();
+                string input = System.Console.ReadLine() ?? string.Empty;
+#if DEBUG
+                if (string.IsNullOrEmpty(input)) input = "127.0.0.1";
+#endif
+                ConsoleWriter.HideCursor();
+
+                ClearErrorMessage();
+
+                if (!input.StartsWith(URI_PREFIX)) input = $"{URI_PREFIX}{input}";
+                if (!input.EndsWith(URI_SUFFIX)) input = $"{input}{URI_SUFFIX}";
+                try { return new(input, UriKind.Absolute); }
+                catch { PrintErrorMessage("Provide address in following format: 123.123.123.123"); }
+            }
+        }
+
+        public static GameSettings GetGameSettings()
+        {
+            Uri? hostAddress = null;
+
+            GameMode mode = GetGameMode();
+
+            if (mode is GameMode.Online)
+                if (!AskPlayerYesNoQuestion("Will you host game?"))
+                    hostAddress = GetPlayerHostUriInput();
+
+            Side playerSide = mode switch
+            {
+                GameMode.Singleplayer or GameMode.Online => GetPlayerSide(),
+                GameMode.Hotseat => Side.All,
+                _ => Side.None,
+            };
+
+            return new(mode, playerSide, hostAddress);
         }
 
         public static void PrintGameOver(Side winner, GameOverReason reason)

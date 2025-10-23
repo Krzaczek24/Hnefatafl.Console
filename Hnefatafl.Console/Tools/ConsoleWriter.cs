@@ -12,12 +12,14 @@ namespace Hnefatafl.Console.Tools
             public static ConsoleColor DefaultForegroundColor { get; } = ConsoleColor.White;
         }
 
-        public static void Print(int left, int top, object text, ConsoleColor foreground)
-            => Print(left, top, text, foreground, Settings.DefaultBackgroundColor);
-        public static void Print(int left, int top, object text, ConsoleColor foreground, ConsoleColor background)
+        public static void Print(int left, int top, object text, ConsoleColor foreground, bool returnCursor = false)
+            => Print(left, top, text, foreground, Settings.DefaultBackgroundColor, returnCursor);
+        public static void Print(int left, int top, object text, ConsoleColor foreground, ConsoleColor background, bool returnCursor = false)
         {
             SetCursorPosition(left, Settings.CommunicationRow + top);
             Print($"{text}".PadRight(BufferWidth - left), foreground, background);
+            if (returnCursor)
+                SetCursorPosition(left + $"{text}".Length, Settings.CommunicationRow + top);
         }
 
         public static void Print(object text, ConsoleColor foreground) => Print(text, foreground, Settings.DefaultBackgroundColor);
@@ -33,5 +35,8 @@ namespace Hnefatafl.Console.Tools
             ForegroundColor = foreground;
             BackgroundColor = background;
         }
+
+        public static void ShowCursor() => CursorVisible = true;
+        public static void HideCursor() => CursorVisible = false;
     }
 }
