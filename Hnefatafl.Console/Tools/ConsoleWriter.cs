@@ -8,22 +8,30 @@ namespace Hnefatafl.Console.Tools
         public class Settings
         {
             public static int CommunicationRow = (Board.SIZE + 1) * BoardDrawer.Settings.RowHeight;
-            public static ConsoleColor DefaultColor { get; } = ConsoleColor.White;
+            public static ConsoleColor DefaultBackgroundColor { get; } = ConsoleColor.Black;
+            public static ConsoleColor DefaultForegroundColor { get; } = ConsoleColor.White;
         }
 
-        public static void Print(int left, int top, object text, ConsoleColor color, ConsoleColor background = ConsoleColor.Black)
+        public static void Print(int left, int top, object text, ConsoleColor foreground)
+            => Print(left, top, text, foreground, Settings.DefaultBackgroundColor);
+        public static void Print(int left, int top, object text, ConsoleColor foreground, ConsoleColor background)
         {
             SetCursorPosition(left, Settings.CommunicationRow + top);
-            Print(text, color, background);
+            Print($"{text}".PadRight(BufferWidth - left), foreground, background);
         }
 
-        public static void Print(object text, ConsoleColor color, ConsoleColor background = ConsoleColor.Black)
+        public static void Print(object text, ConsoleColor foreground) => Print(text, foreground, Settings.DefaultBackgroundColor);
+        public static void Print(object text, ConsoleColor foreground, ConsoleColor background)
         {
-            ForegroundColor = color;
-            BackgroundColor = background;
+            SetColor(foreground, background);
             Write(text);
-            ForegroundColor = Settings.DefaultColor;
-            BackgroundColor = ConsoleColor.Black;
+            SetColor(Settings.DefaultForegroundColor, Settings.DefaultBackgroundColor);
+        }
+
+        public static void SetColor(ConsoleColor foreground, ConsoleColor background)
+        {
+            ForegroundColor = foreground;
+            BackgroundColor = background;
         }
     }
 }

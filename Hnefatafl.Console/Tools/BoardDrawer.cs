@@ -80,6 +80,26 @@ namespace Hnefatafl.Console.Tools
             Write(GetFieldText(field, mode));
         }
 
+        public static void PrintPawnMoveAnimation(Board board, Field startField, Field endField, int interval)
+        {
+            Pawn pawn = endField.Pawn ?? startField.Pawn!;
+            string pawnFieldText = GetFieldText(pawn.Field, FieldDrawMode.Default);
+
+            var (rowIncrement, colIncrement) = endField.Coordinates - startField.Coordinates;
+            (rowIncrement, colIncrement) = (Math.Sign(rowIncrement), Math.Sign(colIncrement));
+            for (var (row, column) = startField.Coordinates; new Coordinates(row, column) != endField.Coordinates; row += rowIncrement, column += colIncrement)
+            {
+                Thread.Sleep(interval);
+
+                PrintField(board[row, column], FieldDrawMode.Default);
+
+                SetCursorColor(pawn, FieldDrawMode.Default);
+                SetCursorPosition((column + 1 + colIncrement) * Settings.ColumnWidth, (row + 1 + rowIncrement) * Settings.RowHeight);
+                Write(pawnFieldText);
+            }
+            Thread.Sleep(interval);
+        }
+
         private static void SetCursorColor(Pawn? pawn, FieldDrawMode mode)
         {
             BackgroundColor = Settings.DefaultBackgroundColor;

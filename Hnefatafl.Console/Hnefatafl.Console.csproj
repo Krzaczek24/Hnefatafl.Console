@@ -20,6 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.AI\Hnefatafl.Engine.AI.csproj" />
         <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.Core\Hnefatafl.Engine.csproj" />
     </ItemGroup>
 

@@ -1,7 +1,9 @@
 ﻿using Hnefatafl.Console.Enums;
+using Hnefatafl.Engine.AI;
 using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
+using System.Collections.Frozen;
 
 namespace Hnefatafl.Console.Tools
 {
@@ -9,30 +11,32 @@ namespace Hnefatafl.Console.Tools
     {
         public static class Settings
         {
-            public static ConsoleColor PrefixColor { get; } = ConsoleColor.DarkYellow;
-            public static ConsoleColor SecondPrefixColor { get; } = ConsoleColor.Yellow;
+            public static ConsoleColor DefaultColor { get; } = ConsoleColor.White;
+            public static ConsoleColor FirstLineColor { get; } = ConsoleColor.DarkYellow;
+            public static ConsoleColor SecondLineColor { get; } = ConsoleColor.Yellow;
+            public static ConsoleColor ThirdLineColor { get; } = ConsoleColor.Cyan;
             public static ConsoleColor CoordinatesColor { get; } = ConsoleColor.Magenta;
+            public static ConsoleColor ErrorColor { get; } = ConsoleColor.DarkRed;
         }
 
-        const string CURRENT_PLAYER_PREFIX = "Current player: ";
-        public static void PrintCurrentPlayerPrefix() => ConsoleWriter.Print(0, 0, CURRENT_PLAYER_PREFIX, Settings.PrefixColor);
-        public static void PrintCurrentPlayer(Player currentPlayer)
-        {
-            ConsoleWriter.Print(CURRENT_PLAYER_PREFIX.Length, 0, currentPlayer, currentPlayer switch
-            {
-                Player.Attacker => BoardDrawer.Settings.AttackerColor,
-                Player.Defender => BoardDrawer.Settings.DefenderColor,
-                _ => throw new InvalidOperationException($"Unknown value of [{currentPlayer}]"),
-            });
-        }
+        const string CURRENT_SIDE_PREFIX = "Current side: ";
+        public static void PrintCurrentPlayerPrefix() => ConsoleWriter.Print(0, 0, CURRENT_SIDE_PREFIX, Settings.FirstLineColor);
+        public static void PrintCurrentPlayer(Side currentSide) => ConsoleWriter.Print(CURRENT_SIDE_PREFIX.Length, 0, currentSide, GetSideColor(currentSide));
 
         const string CURRENT_FIELD_PREFIX = "Current field: ";
-        public static void PrintCurrentFieldPrefix() => ConsoleWriter.Print(0, 1, CURRENT_FIELD_PREFIX, Settings.SecondPrefixColor);
-        public static void PrintCurrentField(Field? field) => ConsoleWriter.Print(CURRENT_FIELD_PREFIX.Length, 1, $"{field?.Coordinates}".PadRight(BoardDrawer.Settings.ColumnWidth), Settings.CoordinatesColor);
+        public static void PrintCurrentFieldPrefix() => ConsoleWriter.Print(0, 1, CURRENT_FIELD_PREFIX, Settings.SecondLineColor);
+        public static void PrintCurrentField(Field? field) => ConsoleWriter.Print(CURRENT_FIELD_PREFIX.Length, 1, $"{field?.Coordinates}", Settings.CoordinatesColor);
+
+        const string AI_IS_THINKING = "AI opponent is thinking ...";
+        public static void PrintAiIsThinking() => ConsoleWriter.Print(0, 1, AI_IS_THINKING, Settings.SecondLineColor);
+
+        const string AI_MOVING = "AI moved pawn from {0} to {1}";
+        public static void PrintAiMove(Field from, Field to) => ConsoleWriter.Print(0, 2, string.Format(AI_MOVING, from.Coordinates, to.Coordinates), Settings.ThirdLineColor);
+        public static void ClearAiMove() => ConsoleWriter.Print(0, 2, string.Empty, Settings.ThirdLineColor);
 
         private static string? LastErrorMessagePrinted { get; set; } = null;
 
-        public static void GetPlayerMove(Board board, Player player, out Pawn pawn, out Field field)
+        public static void GetPlayerMove(Board board, Side player, out Pawn pawn, out Field field)
         {
             pawn = null!;
             field = null!;
@@ -43,7 +47,7 @@ namespace Hnefatafl.Console.Tools
             }
         }
 
-        public static Pawn SelectPawn(Board board, Player player, Field? initialField)
+        public static Pawn SelectPawn(Board board, Side player, Field? initialField)
         {
             var availableFields = board.GetPawns(player).Where(board.CanMove).Select(pawn => pawn.Field);
             PrintCurrentField(initialField);
@@ -138,19 +142,59 @@ namespace Hnefatafl.Console.Tools
             }
         }
 
-        public static bool GetPlayerDecision(string question)
+        public static bool AskPlayerQuestion(string question, IEnumerable<ConsoleKey> trueKeys) => AskPlayerQuestion(question, trueKeys, [], out _) ?? false;
+        public static bool? AskPlayerQuestion(string question, IEnumerable<ConsoleKey> trueKeys, IEnumerable<ConsoleKey> falseKeys) => AskPlayerQuestion(question, trueKeys, falseKeys, out _);
+        private static bool? AskPlayerQuestion(string question, IEnumerable<ConsoleKey> trueKeys, IEnumerable<ConsoleKey> falseKeys, out ConsoleKey playerKey)
         {
-            ConsoleWriter.Print(0, 1, question.PadRight(System.Console.BufferWidth), ConsoleColor.DarkRed);
-            return System.Console.ReadKey(true).Key is ConsoleKey.Y or ConsoleKey.Enter;
+            ConsoleWriter.Print(0, 2, question, Settings.ThirdLineColor);
+            playerKey = System.Console.ReadKey(true).Key;
+            ConsoleWriter.Print(0, 2, string.Empty, Settings.ThirdLineColor);
+            if (trueKeys.Contains(playerKey))
+                return true;
+            if (falseKeys.Contains(playerKey))
+                return false;
+            return null;
         }
 
-        public static void PrintWinner() => PrintErrorMessage("YOU WIN");
+        private static IEnumerable<string> AiLevelNames { get; } = Enum.GetNames<AiLevel>();
+        private static IReadOnlyDictionary<ConsoleKey, AiLevel> AiLevels { get; } = Enum.GetValues<AiLevel>().ToFrozenDictionary(x => Enum.Parse<ConsoleKey>($"{x}"[..1], false), x => x);
+        public static AiLevel? GetAiLevel()
+        {
+            ConsoleKey playerKey;
+            while (!AskPlayerQuestion($"Want to play with AI? {string.Join(", ", AiLevelNames.Select(x => $"[{x[0]}]{x[1..]}"))} [N]o",
+                AiLevels.Keys, [ConsoleKey.N, ConsoleKey.Escape], out playerKey).HasValue) { } ;
+            return AiLevels.TryGetValue(playerKey, out AiLevel aiLevel) ? aiLevel : null;
+        }
+
+        public static Side GetPlayerSide()
+        {
+            bool? playAsAttackers = null;
+            while (playAsAttackers is null)
+                playAsAttackers = AskPlayerQuestion("Choose your side [A]ttackers or [D]efenders: ",
+                    [ConsoleKey.A], [ConsoleKey.D]);
+
+            return playAsAttackers!.Value ? Side.Attackers : Side.Defenders;
+        }
+
+        public static void PrintGameOver(Side winner, GameOverReason reason)
+        {
+            const string WIN_SIDE_PREFIX = "The winner side are ";
+            ConsoleWriter.Print(0, 0, WIN_SIDE_PREFIX, Settings.FirstLineColor);
+            ConsoleWriter.Print(WIN_SIDE_PREFIX.Length, 0, winner, GetSideColor(winner));
+            ConsoleWriter.Print(0, 1, reason switch
+            {
+                GameOverReason.AllAttackerPawnsCaptured => "The attacking forces were defeated!",
+                GameOverReason.KingCaptured => "The defenders failed to protect the king!",
+                GameOverReason.KingEscaped => "The king fled from the battlefield!",
+                _ => throw new InvalidOperationException()
+            }, Settings.SecondLineColor);
+        }
 
         private static void ClearErrorMessage()
         {
             if (LastErrorMessagePrinted is not null)
             {
-                ConsoleWriter.Print(0, 2, string.Empty.PadRight(LastErrorMessagePrinted.Length), ConsoleColor.DarkRed);
+                ConsoleWriter.Print(0, 3, string.Empty, Settings.DefaultColor);
                 LastErrorMessagePrinted = null;
             }
         }
@@ -158,7 +202,14 @@ namespace Hnefatafl.Console.Tools
         private static void PrintErrorMessage(string message)
         {
             ClearErrorMessage();
-            ConsoleWriter.Print(0, 2, LastErrorMessagePrinted = message, ConsoleColor.DarkRed);
+            ConsoleWriter.Print(0, 3, LastErrorMessagePrinted = message, Settings.ErrorColor);
         }
+
+        private static ConsoleColor GetSideColor(Side player) => player switch
+        {
+            Side.Attackers => BoardDrawer.Settings.AttackerColor,
+            Side.Defenders => BoardDrawer.Settings.DefenderColor,
+            _ => throw new InvalidOperationException($"Unknown value of [{player}]"),
+        };
     }
 }
