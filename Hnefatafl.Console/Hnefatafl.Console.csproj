@@ -20,9 +20,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.AI\Hnefatafl.Engine.AI.csproj" />
-        <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.Core\Hnefatafl.Engine.csproj" />
-        <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.Online\Hnefatafl.Engine.Online.csproj" />
+      <ProjectReference Include="..\Hnefatafl.AI\Hnefatafl.AI.csproj" />
+      <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.OnlineConnector\Hnefatafl.Engine.OnlineConnector.csproj" />
+      <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine\Hnefatafl.Engine.csproj" />
     </ItemGroup>
 
 </Project>

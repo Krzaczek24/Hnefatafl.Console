@@ -6,8 +6,8 @@ using Hnefatafl.Engine.AI;
 using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
-using Hnefatafl.Engine.Online;
-using Hnefatafl.Engine.Online.Interfaces;
+using Hnefatafl.Engine.OnlineConnector.Connectors;
+using Hnefatafl.Engine.OnlineConnector.Interfaces;
 
 namespace Hnefatafl.Console
 {

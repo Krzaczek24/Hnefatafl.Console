@@ -1,6 +1,6 @@
 ﻿using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
-using Hnefatafl.Engine.Online.Models;
+using Hnefatafl.Engine.OnlineConnector.Models;
 
 namespace Hnefatafl.Console.Extensions
 {
