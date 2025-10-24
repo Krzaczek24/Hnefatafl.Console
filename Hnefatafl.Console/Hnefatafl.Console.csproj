@@ -13,8 +13,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Krzaq.WebSocketConnector" Version="1.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\Hnefatafl.AI\Hnefatafl.AI.csproj" />
-      <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.OnlineConnector\Hnefatafl.Engine.OnlineConnector.csproj" />
       <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine\Hnefatafl.Engine.csproj" />
     </ItemGroup>
 

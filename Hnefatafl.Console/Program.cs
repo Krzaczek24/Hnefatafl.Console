@@ -1,13 +1,11 @@
 ﻿using Hnefatafl.Console.Enums;
-using Hnefatafl.Console.Extensions;
 using Hnefatafl.Console.Models;
 using Hnefatafl.Console.Tools;
 using Hnefatafl.Engine.AI;
 using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
-using Hnefatafl.Engine.OnlineConnector.Connectors;
-using Hnefatafl.Engine.OnlineConnector.Interfaces;
+using Krzaq.WebSocketConnector.Interfaces;
 
 namespace Hnefatafl.Console
 {
@@ -48,8 +46,8 @@ namespace Hnefatafl.Console
 
         private static async Task Play(Game game, GameSettings settings)
         {
-            IGameConnector connector = settings.GameMode is GameMode.Online
-                ? GetGameConnector(settings.HostAddress)
+            IWebSocketConnector<MoveInfo> connector = settings.GameMode is GameMode.Online
+                ? await GetGameConnector(settings.HostAddress)
                 : null!;
 
             while (!game.IsGameOver)
@@ -65,7 +63,7 @@ namespace Hnefatafl.Console
                     BoardDrawer.Settings.MoveAnimation = 100;
 
                     if (IsOnlineGame())
-                        await connector.SendMyMove(new(movingPawn.Field.Coordinates, targetField.Coordinates));
+                        await connector.Send(new(movingPawn.Field.Coordinates, targetField.Coordinates));
                 }
                 else
                 {
@@ -73,9 +71,14 @@ namespace Hnefatafl.Console
                     Chat.ClearOpponentMove();
 
                     if (IsOnlineGame())
-                        (await connector.WaitForOpponentMove()).Extract(game.Board, out movingPawn, out targetField);
+                    {
+                        MoveInfo moveInfo = await connector.WaitForResponse();
+                        moveInfo.Extract(game.Board, out movingPawn, out targetField);
+                    }
                     else
+                    {
                         AiPlayer.GetMove(game, out movingPawn, out targetField);
+                    }
 
                     Chat.PrintOpponentMove(movingPawn.Field, targetField);
                     Chat.PrintCurrentFieldPrefix();
@@ -101,21 +104,21 @@ namespace Hnefatafl.Console
             bool IsOnlineGame() => connector is not null;
         }
 
-        private static IGameConnector GetGameConnector(Uri? hostAddress)
+        private static Task<IOnlineConnector> GetGameConnector(Uri? hostAddress)
         {
             return hostAddress is null ? GetGameHost() : GetGameClient(hostAddress);
 
-            static GameHost GetGameHost()
+            async Task<IOnlineConnector> GetGameHost()
             {
-                GameHost host = new();
-                host.StartAsync().GetAwaiter().GetResult();
+                var host = new OnlineHost();
+                await host.StartAsync();
                 return host;
             }
 
-            static GameClient GetGameClient(Uri hostAddress)
+            async Task<IOnlineConnector> GetGameClient(Uri hostAddress)
             {
-                GameClient client = new(hostAddress);
-                client.ConnectAsync().GetAwaiter().GetResult();
+                var client = new OnlineClient(hostAddress);
+                await client.ConnectAsync();
                 return client;
             }
         }

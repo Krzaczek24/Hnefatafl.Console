@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.Console", "Hnefat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.Engine", "Hnefatafl.Engine\Hnefatafl.Engine\Hnefatafl.Engine.csproj", "{775502FD-7214-3EEE-B66E-9B88F05CD091}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.Engine.OnlineConnector", "Hnefatafl.Engine\Hnefatafl.Engine.OnlineConnector\Hnefatafl.Engine.OnlineConnector.csproj", "{C19B1C57-D904-B87F-C057-5444E1FFB46A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.AI", "Hnefatafl.AI\Hnefatafl.AI.csproj", "{5A7C69A9-D148-4D11-DDFC-6251555ED518}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.AI.Tests", "Hnefatafl.AI.Tests\Hnefatafl.AI.Tests.csproj", "{D15EC3D0-5C08-15BC-7C77-0E509153E43F}"
@@ -18,8 +16,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hnefatafl.AI", "Hnefatafl.AI", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hnefatafl.Engine", "Hnefatafl.Engine", "{9621BE56-B41B-4B4D-BF44-B119519D581F}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hnefatafl.OnlineConnector", "Hnefatafl.OnlineConnector", "{D5B6FA2E-0E36-4ECC-8CCA-C08EB37D4B07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +31,6 @@ Global
 		{775502FD-7214-3EEE-B66E-9B88F05CD091}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{775502FD-7214-3EEE-B66E-9B88F05CD091}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{775502FD-7214-3EEE-B66E-9B88F05CD091}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C19B1C57-D904-B87F-C057-5444E1FFB46A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C19B1C57-D904-B87F-C057-5444E1FFB46A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C19B1C57-D904-B87F-C057-5444E1FFB46A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C19B1C57-D904-B87F-C057-5444E1FFB46A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5A7C69A9-D148-4D11-DDFC-6251555ED518}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5A7C69A9-D148-4D11-DDFC-6251555ED518}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A7C69A9-D148-4D11-DDFC-6251555ED518}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -57,11 +49,9 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{775502FD-7214-3EEE-B66E-9B88F05CD091} = {9621BE56-B41B-4B4D-BF44-B119519D581F}
-		{C19B1C57-D904-B87F-C057-5444E1FFB46A} = {D5B6FA2E-0E36-4ECC-8CCA-C08EB37D4B07}
 		{5A7C69A9-D148-4D11-DDFC-6251555ED518} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{D15EC3D0-5C08-15BC-7C77-0E509153E43F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{1D49F445-4E78-B56A-9172-D44400EBEE29} = {9621BE56-B41B-4B4D-BF44-B119519D581F}
-		{D5B6FA2E-0E36-4ECC-8CCA-C08EB37D4B07} = {9621BE56-B41B-4B4D-BF44-B119519D581F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7ACE2B79-A44B-44FA-89EA-50EBD85C7336}
