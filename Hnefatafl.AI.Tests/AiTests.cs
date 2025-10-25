@@ -1,4 +1,5 @@
-﻿using Hnefatafl.Engine.Enums;
+﻿using Hnefatafl.AI;
+using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
 using KrzaqTools.Extensions;

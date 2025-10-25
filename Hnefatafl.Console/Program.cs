@@ -1,7 +1,7 @@
-﻿using Hnefatafl.Console.Enums;
+﻿using Hnefatafl.AI;
+using Hnefatafl.Console.Enums;
 using Hnefatafl.Console.Models;
 using Hnefatafl.Console.Tools;
-using Hnefatafl.Engine.AI;
 using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;

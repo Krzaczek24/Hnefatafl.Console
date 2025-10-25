@@ -2,7 +2,7 @@
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
 
-namespace Hnefatafl.Engine.AI
+namespace Hnefatafl.AI
 {
     public static class AiPlayer
     {
@@ -65,7 +65,7 @@ namespace Hnefatafl.Engine.AI
 
             return score;
 
-            int GetMobility(Game simulatedGame, Side side) => simulatedGame.Board.GetPawns(side).Where(simulatedGame.Board.CanMove).Count();
+            static int GetMobility(Game simulatedGame, Side side) => simulatedGame.Board.GetPawns(side).Where(simulatedGame.Board.CanMove).Count();
         }
     }
 }
