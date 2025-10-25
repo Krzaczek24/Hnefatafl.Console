@@ -26,6 +26,18 @@ namespace Hnefatafl.Console.Tools
         public static void PrintCurrentFieldPrefix() => ConsoleWriter.Print(0, 1, CURRENT_FIELD_PREFIX, Settings.SecondLineColor);
         public static void PrintCurrentField(Field? field) => ConsoleWriter.Print(CURRENT_FIELD_PREFIX.Length, 1, $"{field?.Coordinates}", Settings.CoordinatesColor);
 
+        const string WAITING_FOR_CLIENT_TO_CONNECT = "Waiting for opponent to connect ...";
+        public static void PrintWaitingForClientToConnect() => ConsoleWriter.Print(0, 2, WAITING_FOR_CLIENT_TO_CONNECT, Settings.ThirdLineColor);
+
+        const string CLIENT_CONNECTED = "Opponent connected!";
+        public static void PrintClientConnected() => ConsoleWriter.Print(0, 2, CLIENT_CONNECTED, Settings.ThirdLineColor);
+
+        const string CONNECTING_TO_HOST = "Connecting to opponent ...";
+        public static void PrintConnectingToHost() => ConsoleWriter.Print(0, 2, CONNECTING_TO_HOST, Settings.ThirdLineColor);
+
+        const string CONNECTED_TO_HOST = "Connected to opponent ...";
+        public static void PrintConnectedToHost() => ConsoleWriter.Print(0, 2, CONNECTED_TO_HOST, Settings.ThirdLineColor);
+
         const string WAITING_FOR_OPPONENT_MOVE = "Waiting for opponent move ...";
         public static void PrintOpponentIsThinking() => ConsoleWriter.Print(0, 1, WAITING_FOR_OPPONENT_MOVE, Settings.SecondLineColor);
 
@@ -213,24 +225,24 @@ namespace Hnefatafl.Console.Tools
             }
         }
 
-        public static GameSettings GetGameSettings()
+        public static void GetGameSettings()
         {
-            Uri? hostAddress = null;
-
-            GameMode mode = GetGameMode();
-
-            if (mode is GameMode.Online)
-                if (!AskPlayerYesNoQuestion("Will you host game?"))
-                    hostAddress = GetPlayerHostUriInput();
-
-            Side playerSide = mode switch
+            switch (GameSettings.Mode = GetGameMode())
             {
-                GameMode.Singleplayer or GameMode.Online => GetPlayerSide(),
-                GameMode.Hotseat => Side.All,
-                _ => Side.None,
-            };
-
-            return new(mode, playerSide, hostAddress);
+                case GameMode.Singleplayer:
+                case GameMode.Online when AskPlayerYesNoQuestion("Will you host game?"):
+                    GameSettings.PlayerSide = GetPlayerSide();
+                    break;
+                case GameMode.Hotseat:
+                    GameSettings.PlayerSide = Side.All;
+                    break;
+                case GameMode.Online:
+                    GameSettings.HostAddress = GetPlayerHostUriInput();
+                    break;
+                case GameMode.AiDemo:
+                    GameSettings.PlayerSide = Side.None;
+                    break;
+            }
         }
 
         public static void PrintGameOver(Side winner, GameOverReason reason)

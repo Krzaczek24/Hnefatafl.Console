@@ -5,7 +5,6 @@ using Hnefatafl.Engine.AI;
 using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
-using Krzaq.WebSocketConnector.Interfaces;
 
 namespace Hnefatafl.Console
 {
@@ -15,16 +14,20 @@ namespace Hnefatafl.Console
 
         static async Task MainAsync()
         {
-            GameSettings? gameSettings = null;
             do
             {
                 Game game = NewGame();
-                if (gameSettings is null
-                || !Chat.AskPlayerYesNoQuestion("With the same settings?"))
-                {
-                    gameSettings = Chat.GetGameSettings();
-                }
-                await Play(game, gameSettings);
+
+                if (GameSettings.Mode is null)
+                    Chat.GetGameSettings();
+
+                else if (GameSettings.Mode is GameMode.Online && GameSettings.IsHost && Chat.AskPlayerYesNoQuestion("Want to swap sides?"))
+                    GameSettings.SwapSides();
+
+                else if (Chat.AskPlayerYesNoQuestion("Want to change game settings?"))
+                    Chat.GetGameSettings();
+
+                await Play(game);
             }
             while (Chat.AskPlayerYesNoQuestion("Want to play again?"));
         }
@@ -44,10 +47,10 @@ namespace Hnefatafl.Console
             return game;
         }
 
-        private static async Task Play(Game game, GameSettings settings)
+        private static async Task Play(Game game)
         {
-            IWebSocketConnector<MoveInfo> connector = settings.GameMode is GameMode.Online
-                ? await GetGameConnector(settings.HostAddress)
+            var connector = GameSettings.Mode is GameMode.Online
+                ? await InitializeOnlineConnection()
                 : null!;
 
             while (!game.IsGameOver)
@@ -100,25 +103,40 @@ namespace Hnefatafl.Console
 
             Chat.PrintGameOver(game.CurrentSide, game.GameOverReason!.Value);
 
-            bool IsLocalHumanPlayerTurn() => settings.PlayerSide.HasFlag(game.CurrentSide);
+            bool IsLocalHumanPlayerTurn() => GameSettings.PlayerSide.HasFlag(game.CurrentSide);
             bool IsOnlineGame() => connector is not null;
         }
 
-        private static Task<IOnlineConnector> GetGameConnector(Uri? hostAddress)
+        private static Task<IOnlineConnector> InitializeOnlineConnection()
         {
-            return hostAddress is null ? GetGameHost() : GetGameClient(hostAddress);
+            MoveInfo hostIsAttackerSignal = new(new(2,1), new(3, 7));
+            MoveInfo hostIsDefenderSignal = new(new(1,9), new(9, 4));
 
-            async Task<IOnlineConnector> GetGameHost()
+            return GameSettings.IsHost ? InitializeGameHost() : InitializeGameClient();
+
+            async Task<IOnlineConnector> InitializeGameHost()
             {
                 var host = new OnlineHost();
+                Chat.PrintWaitingForClientToConnect();
                 await host.StartAsync();
+                Chat.PrintClientConnected();
+
+                MoveInfo hostSignal = GameSettings.PlayerSide is Side.Attackers ? hostIsAttackerSignal : hostIsDefenderSignal;
+                await host.Send(hostSignal);
+
                 return host;
             }
 
-            async Task<IOnlineConnector> GetGameClient(Uri hostAddress)
+            async Task<IOnlineConnector> InitializeGameClient()
             {
-                var client = new OnlineClient(hostAddress);
+                var client = new OnlineClient(GameSettings.HostAddress!);
+                Chat.PrintConnectingToHost();
                 await client.ConnectAsync();
+                Chat.PrintConnectedToHost();
+
+                MoveInfo hostSignal = await client.WaitForResponse();
+                GameSettings.PlayerSide = hostSignal == hostIsAttackerSignal ? Side.Defenders : Side.Attackers;
+
                 return client;
             }
         }
