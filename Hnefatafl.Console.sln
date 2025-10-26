@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.AI.Tests", "Hnefa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hnefatafl.AI", "Hnefatafl.AI", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.AddFirewallPolicy", "Hnefatafl.AddFirewallPolicy\Hnefatafl.AddFirewallPolicy.csproj", "{9FDDF1FE-3925-49FB-A764-FC37910EDA9F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hnefatafl.FirewallPolicy", "Hnefatafl.FirewallPolicy", "{86199426-1D64-4B1B-AE1D-6E9CC216FEAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +33,10 @@ Global
 		{D15EC3D0-5C08-15BC-7C77-0E509153E43F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D15EC3D0-5C08-15BC-7C77-0E509153E43F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D15EC3D0-5C08-15BC-7C77-0E509153E43F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FDDF1FE-3925-49FB-A764-FC37910EDA9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FDDF1FE-3925-49FB-A764-FC37910EDA9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FDDF1FE-3925-49FB-A764-FC37910EDA9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FDDF1FE-3925-49FB-A764-FC37910EDA9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -36,6 +44,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{5A7C69A9-D148-4D11-DDFC-6251555ED518} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{D15EC3D0-5C08-15BC-7C77-0E509153E43F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{9FDDF1FE-3925-49FB-A764-FC37910EDA9F} = {86199426-1D64-4B1B-AE1D-6E9CC216FEAE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7ACE2B79-A44B-44FA-89EA-50EBD85C7336}

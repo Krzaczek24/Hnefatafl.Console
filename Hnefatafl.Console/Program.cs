@@ -5,6 +5,7 @@ using Hnefatafl.Console.Tools;
 using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
+using System.Net.WebSockets;
 
 namespace Hnefatafl.Console
 {
@@ -49,7 +50,7 @@ namespace Hnefatafl.Console
 
         private static async Task Play(Game game)
         {
-            var connector = GameSettings.Mode is GameMode.Online
+            IOnlineConnector connector = GameSettings.Mode is GameMode.Online
                 ? await InitializeOnlineConnection()
                 : null!;
 
@@ -109,8 +110,8 @@ namespace Hnefatafl.Console
 
         private static Task<IOnlineConnector> InitializeOnlineConnection()
         {
-            MoveInfo hostIsAttackerSignal = new(new(2,1), new(3, 7));
-            MoveInfo hostIsDefenderSignal = new(new(1,9), new(9, 4));
+            MoveInfo hostIsAttackerSignal = new(new(2, 1), new(3, 7));
+            MoveInfo hostIsDefenderSignal = new(new(1, 9), new(9, 4));
 
             return GameSettings.IsHost ? InitializeGameHost() : InitializeGameClient();
 
